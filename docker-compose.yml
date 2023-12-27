@@ -1,0 +1,74 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: ../frontend
+    ports:
+      - "3000:3000"
+    # volumes:
+      # - ../frontend/src:/app/src
+      # - /app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ../frontend
+          target: /app
+          ignore:
+            - ../frontend/node_modules/
+        - action: rebuild
+          path: ../frontend/package.json
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ../backend
+    # command: ["./wait-for-it.sh", "postgres:5432", "--", "npm", "run", "start:dev"]
+    command: ["/bin/bash", "-c", "apt-get update && apt-get install -y wait-for-it && wait-for-it postgres:5432 -- npm run start:dev"]
+    ports:
+      - "3001:3001"
+    # volumes:
+      # - ../backend/src:/app/src
+      # - /app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ../backend
+          target: /app
+          ignore:
+            - ../backend/node_modules/
+        - action: rebuild
+          path: ../backend/package.json
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5435
+      POSTGRES_USER: dalveersidhu97
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: dalveersidhu97
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    command: ["/bin/bash", "-c", "apt-get update && apt-get install -y wait-for-it && wait-for-it frontend:3000 -- wait-for-it backend:3001 -- nginx -g 'daemon off;'"]
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres_data:
