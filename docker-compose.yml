@@ -2,7 +2,7 @@ version: '3'
 services:
   frontend:
     build:
-      context: ../frontend
+      context: ../setup-frontend
     ports:
       - "3000:3000"
     # volumes:
@@ -11,18 +11,18 @@ services:
     develop:
       watch:
         - action: sync
-          path: ../frontend
+          path: ../setup-frontend
           target: /app
           ignore:
-            - ../frontend/node_modules/
+            - ../setup-frontend/node_modules/
         - action: rebuild
-          path: ../frontend/package.json
+          path: ../setup-frontend/package.json
     depends_on:
       - backend
 
   backend:
     build:
-      context: ../backend
+      context: ../setup-backend
     # command: ["./wait-for-it.sh", "postgres:5432", "--", "npm", "run", "start:dev"]
     command: ["/bin/bash", "-c", "apt-get update && apt-get install -y wait-for-it && wait-for-it postgres:5432 -- npm run start:dev"]
     ports:
@@ -33,12 +33,12 @@ services:
     develop:
       watch:
         - action: sync
-          path: ../backend
+          path: ../setup-backend
           target: /app
           ignore:
-            - ../backend/node_modules/
+            - ../setup-backend/node_modules/
         - action: rebuild
-          path: ../backend/package.json
+          path: ../setup-backend/package.json
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5435
